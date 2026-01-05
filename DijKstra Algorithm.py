@@ -2,9 +2,8 @@ import heapq
 import matplotlib.pyplot as plt
 import networkx as nx
 
-# -------------------------------
 # 1. Graph Construction (Adjacency List)
-# -------------------------------
+
 graph = {
     "Hospital_A": [("Intersection", 4), ("Mall", 7), ("PoliceStation", 8)],
     "Hospital_B": [("Residential", 4), ("FireStation", 6)],
@@ -18,9 +17,8 @@ graph = {
     "Intersection": [("Hospital_A", 4), ("School", 5), ("Market", 4), ("FireStation", 3)]
 }
 
-# -------------------------------
 # 2. Manual Dijkstra's Algorithm
-# -------------------------------
+
 def dijkstra(graph, start):
     """
     Manual implementation of Dijkstra's algorithm
@@ -78,9 +76,8 @@ def dijkstra(graph, start):
     
     return distances, paths
 
-# -------------------------------
 # 3. Run Dijkstra from Hospital_A
-# -------------------------------
+
 distances_A, paths_A = dijkstra(graph, "Hospital_A")
 
 print(f"\n{'='*60}")
@@ -93,9 +90,8 @@ for node in sorted(graph.keys()):
     else:
         print(f"{node:15} → {distances_A[node]:2} min | Path: {' -> '.join(paths_A[node])}")
 
-# -------------------------------
 # 4. Run Dijkstra from Hospital_B
-# -------------------------------
+
 distances_B, paths_B = dijkstra(graph, "Hospital_B")
 
 print(f"\n{'='*60}")
@@ -108,9 +104,8 @@ for node in sorted(graph.keys()):
     else:
         print(f"{node:15} → {distances_B[node]:2} min | Path: {' -> '.join(paths_B[node])}")
 
-# -------------------------------
 # 5. Visualize the Graph
-# -------------------------------
+
 G = nx.Graph()
 for node, neighbors in graph.items():
     for neighbor, weight in neighbors:
@@ -140,9 +135,8 @@ plt.axis('off')
 plt.tight_layout()
 plt.show()
 
-# -------------------------------
 # 6. Road Congestion Simulation
-# -------------------------------
+
 print(f"\n{'='*60}")
 print("SIMULATING ROAD CONGESTION")
 print(f"{'='*60}\n")
