@@ -1,76 +1,182 @@
-import networkx as nx
+import heapq
 import matplotlib.pyplot as plt
+import networkx as nx
 
 # -------------------------------
-# 1. Graph Construction
+# 1. Graph Construction (Adjacency List)
+# -------------------------------
+graph = {
+    "Hospital_A": [("Intersection", 4), ("Mall", 7), ("PoliceStation", 8)],
+    "Hospital_B": [("Residential", 4), ("FireStation", 6)],
+    "School": [("Intersection", 5)],
+    "Market": [("Intersection", 4), ("Mall", 3), ("Factory", 5), ("FireStation", 3)],
+    "Factory": [("Market", 5), ("Residential", 6)],
+    "FireStation": [("Intersection", 3), ("Hospital_B", 6), ("Market", 3)],
+    "PoliceStation": [("Residential", 5), ("Hospital_A", 8)],
+    "Mall": [("Market", 3), ("Hospital_A", 7), ("Residential", 7)],
+    "Residential": [("Hospital_B", 4), ("Factory", 6), ("PoliceStation", 5), ("Mall", 7)],
+    "Intersection": [("Hospital_A", 4), ("School", 5), ("Market", 4), ("FireStation", 3)]
+}
+
+# -------------------------------
+# 2. Manual Dijkstra's Algorithm
+# -------------------------------
+def dijkstra(graph, start):
+    """
+    Manual implementation of Dijkstra's algorithm
+    Returns: distances dictionary and paths dictionary
+    """
+    # Initialize distances to infinity for all nodes
+    distances = {node: float('inf') for node in graph}
+    distances[start] = 0
+    
+    # Initialize paths
+    paths = {node: [] for node in graph}
+    paths[start] = [start]
+    
+    # Priority queue: (distance, node)
+    pq = [(0, start)]
+    
+    # Visited set
+    visited = set()
+    
+    print(f"\n{'='*60}")
+    print(f"Starting Dijkstra's Algorithm from: {start}")
+    print(f"{'='*60}\n")
+    
+    step = 1
+    
+    while pq:
+        # Get node with minimum distance
+        current_dist, current_node = heapq.heappop(pq)
+        
+        # Skip if already visited
+        if current_node in visited:
+            continue
+        
+        # Mark as visited
+        visited.add(current_node)
+        
+        print(f"Step {step}: Visiting '{current_node}' (distance: {current_dist})")
+        print(f"  Current path: {' -> '.join(paths[current_node])}")
+        
+        # Explore neighbors
+        for neighbor, weight in graph[current_node]:
+            if neighbor not in visited:
+                # Calculate new distance
+                new_dist = current_dist + weight
+                
+                # Update if we found a shorter path
+                if new_dist < distances[neighbor]:
+                    distances[neighbor] = new_dist
+                    paths[neighbor] = paths[current_node] + [neighbor]
+                    heapq.heappush(pq, (new_dist, neighbor))
+                    print(f"    → Updated '{neighbor}': distance = {new_dist}, path = {' -> '.join(paths[neighbor])}")
+        
+        print()
+        step += 1
+    
+    return distances, paths
+
+# -------------------------------
+# 3. Run Dijkstra from Hospital_A
+# -------------------------------
+distances_A, paths_A = dijkstra(graph, "Hospital_A")
+
+print(f"\n{'='*60}")
+print("FINAL SHORTEST PATHS FROM Hospital_A:")
+print(f"{'='*60}\n")
+
+for node in sorted(graph.keys()):
+    if distances_A[node] == float('inf'):
+        print(f"{node:15} → UNREACHABLE")
+    else:
+        print(f"{node:15} → {distances_A[node]:2} min | Path: {' -> '.join(paths_A[node])}")
+
+# -------------------------------
+# 4. Run Dijkstra from Hospital_B
+# -------------------------------
+distances_B, paths_B = dijkstra(graph, "Hospital_B")
+
+print(f"\n{'='*60}")
+print("FINAL SHORTEST PATHS FROM Hospital_B:")
+print(f"{'='*60}\n")
+
+for node in sorted(graph.keys()):
+    if distances_B[node] == float('inf'):
+        print(f"{node:15} → UNREACHABLE")
+    else:
+        print(f"{node:15} → {distances_B[node]:2} min | Path: {' -> '.join(paths_B[node])}")
+
+# -------------------------------
+# 5. Visualize the Graph
 # -------------------------------
 G = nx.Graph()
+for node, neighbors in graph.items():
+    for neighbor, weight in neighbors:
+        G.add_edge(node, neighbor, weight=weight)
 
-# Nodes (10 locations)
-nodes = [
-    "Hospital_A", "Hospital_B", "School", "Market", "Factory",
-    "FireStation", "PoliceStation", "Mall", "Residential", "Intersection"
-]
-G.add_nodes_from(nodes)
-
-# Edges with travel time (minutes)
-edges = [
-    ("Hospital_A", "Intersection", 4),
-    ("Intersection", "School", 5),
-    ("Intersection", "Market", 6),
-    ("Market", "Mall", 3),
-    ("Mall", "Hospital_A", 7),
-    ("Hospital_B", "Residential", 4),
-    ("Residential", "Factory", 6),
-    ("Factory", "Market", 5),
-    ("FireStation", "Intersection", 3),
-    ("PoliceStation", "Residential", 5),
-    ("FireStation", "Hospital_B", 6),
-    ("PoliceStation", "Hospital_A", 8),
-    ("Mall", "Residential", 7)
-]
-
-G.add_weighted_edges_from(edges)
-
-# -------------------------------
-# 2. Dijkstra’s Algorithm
-# -------------------------------
-dist_A, paths_A = nx.single_source_dijkstra(G, "Hospital_A")
-dist_B, paths_B = nx.single_source_dijkstra(G, "Hospital_B")
-
-print("\nShortest paths from Hospital_A:\n")
-for node in G.nodes():
-    print(f"{node}: Path = {' -> '.join(paths_A[node])}, Time = {dist_A[node]} min")
-
-print("\nShortest paths from Hospital_B:\n")
-for node in G.nodes():
-    print(f"{node}: Path = {' -> '.join(paths_B[node])}, Time = {dist_B[node]} min")
-
-# -------------------------------
-# 3. Graph Visualization
-# -------------------------------
 pos = nx.spring_layout(G, seed=42)
+plt.figure(figsize=(12, 8))
 
-plt.figure(figsize=(10, 8))
-nx.draw(G, pos, with_labels=True, node_size=2000)
+# Draw all nodes and edges
+nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=2000)
+nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold')
+nx.draw_networkx_edges(G, pos, edge_color='gray', width=2)
+
+# Draw edge labels
 edge_labels = nx.get_edge_attributes(G, 'weight')
-nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=9)
 
 # Highlight shortest path from Hospital_A to Market
-shortest_path = paths_A["Market"]
-path_edges = list(zip(shortest_path, shortest_path[1:]))
-nx.draw_networkx_edges(G, pos, edgelist=path_edges, width=4)
+if "Market" in paths_A:
+    path_to_market = paths_A["Market"]
+    path_edges = [(path_to_market[i], path_to_market[i+1]) for i in range(len(path_to_market)-1)]
+    nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='red', width=4)
+    plt.title(f"Shortest Path from Hospital_A to Market: {' → '.join(path_to_market)} ({distances_A['Market']} min)", 
+              fontsize=14, fontweight='bold')
 
-plt.title("Urban Transport Network with Shortest Path Highlighted")
+plt.axis('off')
+plt.tight_layout()
 plt.show()
 
 # -------------------------------
-# 4. Road Congestion Simulation
+# 6. Road Congestion Simulation
 # -------------------------------
-G["Intersection"]["Market"]["weight"] = 15  # simulate blockage
+print(f"\n{'='*60}")
+print("SIMULATING ROAD CONGESTION")
+print(f"{'='*60}\n")
 
-dist_blocked, paths_blocked = nx.single_source_dijkstra(G, "Hospital_A")
+# Create a copy of the graph
+congested_graph = {node: list(edges) for node, edges in graph.items()}
 
-print("\nAfter road congestion (Intersection → Market):")
-print("New path to Market:", " -> ".join(paths_blocked["Market"]))
-print("New travel time:", dist_blocked["Market"], "min")
+# Simulate congestion: Intersection → Market now takes 15 minutes
+for i, (neighbor, weight) in enumerate(congested_graph["Intersection"]):
+    if neighbor == "Market":
+        congested_graph["Intersection"][i] = ("Market", 15)
+
+for i, (neighbor, weight) in enumerate(congested_graph["Market"]):
+    if neighbor == "Intersection":
+        congested_graph["Market"][i] = ("Intersection", 15)
+
+print("⚠️  Road congestion: Intersection ↔ Market now takes 15 minutes (was 4)\n")
+
+# Run Dijkstra again with congestion
+distances_congested, paths_congested = dijkstra(congested_graph, "Hospital_A")
+
+print(f"\n{'='*60}")
+print("COMPARISON: Normal vs Congested Route to Market")
+print(f"{'='*60}\n")
+
+print(f"Normal Route:")
+print(f"  Path: {' -> '.join(paths_A['Market'])}")
+print(f"  Time: {distances_A['Market']} minutes\n")
+
+print(f"Congested Route:")
+print(f"  Path: {' -> '.join(paths_congested['Market'])}")
+print(f"  Time: {distances_congested['Market']} minutes\n")
+
+if paths_A['Market'] != paths_congested['Market']:
+    print("✓ Algorithm found an alternative route due to congestion!")
+else:
+    print("✓ Same route still optimal despite congestion")
